@@ -74,7 +74,7 @@ A equipe seguirá o padrão **Conventional Commits 1.0.0**.
 
 Especificação adotada:
 
-- https://www.conventionalcommits.org/pt-br/v1.0.0/
+- [Conventional Commits 1.0.0](https://www.conventionalcommits.org/pt-br/v1.0.0/)
 
 ### Formato
 
@@ -142,3 +142,85 @@ A equipe deve colar ao final deste documento, ou em `docs/scm-evidence.md`, um p
 - Require linear history
 
 > Observação: este arquivo documenta a regra. A evidência visual da configuração ativa deve ser adicionada manualmente pela equipe após configurar o repositório no GitHub.
+# Plano de SCM
+
+## Contexto
+
+Este plano define como o repositório do projeto **Sistema de Monitoramento de Horta com ESP32** será versionado, revisado e integrado a partir desta atividade. O objetivo é garantir que qualquer integrante da equipe consiga entender o histórico, revisar mudanças com segurança e evoluir o sistema sem depender de conhecimento implícito.
+
+---
+
+## 1.1 Política de Branching
+
+### Modelo adotado
+
+A equipe adotará o **GitHub Flow**.
+
+### Justificativa
+
+O projeto da horta é mantido por uma equipe pequena, com entregas incrementais e escopo acadêmico, então um fluxo simples com branches curtas e merge por Pull Request reduz atrito e facilita a revisão. O GitFlow foi descartado porque introduz branches de release e hotfix que aumentam a burocracia para um projeto que ainda está evoluindo rapidamente. O trunk-based também foi considerado, mas o time ainda depende de revisão explícita antes do merge, o que torna o GitHub Flow mais natural para o ritmo atual do repositório.
+
+### Convenção de nomes de branch
+
+As branches permitidas são:
+
+- `feat/<escopo>` para novas funcionalidades
+- `fix/<escopo>` para correções de defeitos
+- `docs/<escopo>` para documentação
+- `refactor/<escopo>` para melhorias internas sem alterar comportamento externo
+- `test/<escopo>` para criação ou ajuste de testes
+- `chore/<escopo>` para manutenção de configuração, CI e dependências
+
+### Regras de uso
+
+- Toda mudança deve nascer a partir de `main`
+- Não é permitido trabalhar diretamente em `main`
+- Cada branch deve tratar um único objetivo principal
+- O merge deve ocorrer apenas por Pull Request
+
+### Quem pode mergear em `main`
+
+Qualquer integrante com permissão de escrita no repositório pode realizar o merge em `main`, **desde que não seja o autor do PR** e que as seguintes condições tenham sido atendidas:
+
+1. o PR esteja aprovado;
+2. o checklist de pronto esteja completo;
+3. o CI obrigatório esteja verde.
+
+---
+
+## 1.2 Proteção da branch `main`
+
+As seguintes regras devem ficar ativas na proteção da branch `main` no GitHub:
+
+- **Pull Request obrigatório**: ninguém pode fazer push direto em `main`
+- **Mínimo de 1 aprovação** antes do merge
+- **Status checks obrigatórios**: o workflow de CI precisa passar antes do merge
+- **Require branches to be up to date before merging** habilitado
+- **Require linear history** habilitado
+- **Force push bloqueado**
+- **Deletion da branch `main` bloqueada**
+
+### Quantidade mínima de aprovações
+
+A equipe definiu **1 aprovação obrigatória**.
+
+Essa escolha equilibra controle de qualidade e fluidez. Como o time é pequeno, exigir 2 aprovações em todo PR pode travar o fluxo quando algum integrante estiver indisponível. Uma aprovação obrigatória já garante revisão por outra pessoa, reduzindo risco de erro e mudança não discutida.
+
+### Status checks obrigatórios
+
+O check obrigatório será:
+
+- `CI / docs-validation`
+
+Esse check valida a documentação do repositório e garante que arquivos Markdown importantes, como requisitos, processo e plano de SCM, não sejam quebrados por erro de formatação básica.
+
+### Configuração esperada no GitHub
+
+As regras acima devem ser configuradas em:
+
+`Settings -> Branches -> Branch protection rules -> Add rule`
+
+Branch name pattern:
+
+```text
+main
