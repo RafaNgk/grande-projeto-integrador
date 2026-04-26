@@ -45,4 +45,3 @@ Cole neste arquivo um print de tela da configuração ativa da proteção da bra
 
 ```text
 [COLE AQUI O PRINT DA TELA OU A CÓPIA TEXTUAL DAS REGRAS DE PROTEÇÃO DA BRANCH MAIN]
-```
