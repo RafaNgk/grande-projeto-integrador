@@ -74,7 +74,7 @@ A equipe seguirá o padrão **Conventional Commits 1.0.0**.
 
 Especificação adotada:
 
-- https://www.conventionalcommits.org/pt-br/v1.0.0/
+- [Conventional Commits 1.0.0](https://www.conventionalcommits.org/pt-br/v1.0.0/)
 
 ### Formato
 
