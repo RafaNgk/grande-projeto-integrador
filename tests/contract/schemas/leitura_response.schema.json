@@ -1,0 +1,34 @@
+{
+    "type": "object",
+    "required": [
+      "id",
+      "device_id",
+      "timestamp",
+      "sensor",
+      "valor",
+      "status"
+    ],
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "device_id": {
+        "type": "string"
+      },
+      "timestamp": {
+        "type": "string"
+      },
+      "sensor": {
+        "type": "string"
+      },
+      "valor": {
+        "type": "number"
+      },
+      "unidade": {
+        "type": ["string", "null"]
+      },
+      "status": {
+        "type": "string"
+      }
+    }
+  }
