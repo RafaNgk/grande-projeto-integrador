@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Horta Monitorada</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Navegacao principal">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">HM</span>
+          <div>
+            <strong>Horta Monitorada</strong>
+            <span>ESP32 Cloud</span>
+          </div>
+        </div>
+
+        <nav class="nav-list" aria-label="Secoes">
+          <a class="nav-item active" href="#visao-geral" aria-current="page">
+            <span aria-hidden="true">⌂</span>
+            Visao geral
+          </a>
+          <a class="nav-item" href="#historico">
+            <span aria-hidden="true">▥</span>
+            Historico
+          </a>
+          <a class="nav-item" href="#alertas">
+            <span aria-hidden="true">!</span>
+            Alertas
+          </a>
+          <a class="nav-item" href="#limites">
+            <span aria-hidden="true">⚙</span>
+            Limites
+          </a>
+        </nav>
+
+        <div class="device-card">
+          <span class="status-dot"></span>
+          <div>
+            <strong>ESP32-HORTA-01</strong>
+            <span id="deviceSync">Sincronizando...</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Monitoramento em tempo quase real</p>
+            <h1>Estado atual da horta</h1>
+          </div>
+          <div class="topbar-actions">
+            <button class="icon-button" type="button" id="refreshButton" title="Atualizar leituras" aria-label="Atualizar leituras">
+              ↻
+            </button>
+            <button class="primary-button" type="button" id="simulateButton">
+              Simular leitura
+            </button>
+          </div>
+        </header>
+
+        <section class="hero-panel" id="visao-geral" aria-label="Resumo da horta">
+          <div class="garden-visual" aria-hidden="true">
+            <div class="sun"></div>
+            <div class="soil">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+          <div class="hero-status">
+            <span class="health-pill" id="healthPill">Calculando</span>
+            <h2 id="healthTitle">Aguardando leitura</h2>
+            <p id="healthDescription">Os dados simulados serao carregados em instantes.</p>
+          </div>
+        </section>
+
+        <section class="metric-grid" aria-label="Metricas atuais">
+          <article class="metric-card">
+            <span class="metric-icon temperature" aria-hidden="true">°</span>
+            <div>
+              <p>Temperatura</p>
+              <strong id="temperatureValue">--</strong>
+              <span id="temperatureTrend">Sem dados</span>
+            </div>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-icon humidity" aria-hidden="true">≈</span>
+            <div>
+              <p>Umidade do solo</p>
+              <strong id="humidityValue">--</strong>
+              <span id="humidityTrend">Sem dados</span>
+            </div>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-icon latency" aria-hidden="true">↯</span>
+            <div>
+              <p>Latencia estimada</p>
+              <strong id="latencyValue">--</strong>
+              <span>Coleta ate persistencia</span>
+            </div>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-icon uptime" aria-hidden="true">✓</span>
+            <div>
+              <p>Disponibilidade</p>
+              <strong id="uptimeValue">--</strong>
+              <span>Ultimos 30 dias</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="workspace">
+          <div class="chart-section" id="historico">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Historico</p>
+                <h2>Ultimas medicoes</h2>
+              </div>
+              <div class="segmented-control" role="group" aria-label="Periodo">
+                <button class="segment active" type="button" data-range="24">24h</button>
+                <button class="segment" type="button" data-range="7">7d</button>
+                <button class="segment" type="button" data-range="30">30d</button>
+              </div>
+            </div>
+            <div class="chart" id="chart" aria-label="Grafico de temperatura e umidade"></div>
+            <div class="chart-legend">
+              <span><i class="legend-temp"></i>Temperatura</span>
+              <span><i class="legend-humidity"></i>Umidade</span>
+            </div>
+          </div>
+
+          <aside class="alerts-panel" id="alertas">
+            <div class="section-header compact">
+              <div>
+                <p class="eyebrow">Alertas</p>
+                <h2>Ocorrencias</h2>
+              </div>
+              <span class="count-badge" id="alertCount">0</span>
+            </div>
+            <div class="alert-list" id="alertList"></div>
+          </aside>
+        </section>
+
+        <section class="lower-grid">
+          <div class="table-section">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Registros</p>
+                <h2>Leituras recentes</h2>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Temperatura</th>
+                    <th>Umidade</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="readingsTable"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <form class="settings-panel" id="limits" aria-label="Configuracao de limites">
+            <div class="section-header compact">
+              <div>
+                <p class="eyebrow">Limites</p>
+                <h2>Parametros</h2>
+              </div>
+              <button class="icon-button small" type="submit" title="Salvar limites" aria-label="Salvar limites">
+                ✓
+              </button>
+            </div>
+
+            <label>
+              Temperatura minima
+              <input id="minTemp" type="number" min="0" max="60" step="1">
+            </label>
+            <label>
+              Temperatura maxima
+              <input id="maxTemp" type="number" min="0" max="60" step="1">
+            </label>
+            <label>
+              Umidade minima
+              <input id="minHumidity" type="number" min="0" max="100" step="1">
+            </label>
+            <label>
+              Umidade maxima
+              <input id="maxHumidity" type="number" min="0" max="100" step="1">
+            </label>
+            <p class="form-note" id="settingsNote">Valores usados para classificar alertas simulados.</p>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
