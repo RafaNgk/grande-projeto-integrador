@@ -1,3 +1,4 @@
+
 # ADR-001: Arquitetura de Monitoramento da Horta (IoT + Cloud)
 
 ## Status
