@@ -2,42 +2,45 @@
 // Esta é a "fonte de verdade" simulada — a camada api.ts é a única que acessa
 // estes dados, de forma que trocar por uma API real só exige reescrever api.ts.
 
-import type { Canteiro, SensorReading, SensorStatus } from "./types"
+import type { Canteiro, SensorReading, SensorStatus } from "./types";
 
 // Gera timestamps em intervalos de 1h terminando em "agora"
 function generateTimestamps(count: number): string[] {
-  const now = new Date()
+  const now = new Date();
   // arredonda para a hora cheia
-  now.setMinutes(0, 0, 0)
-  const timestamps: string[] = []
+  now.setMinutes(0, 0, 0);
+  const timestamps: string[] = [];
   for (let i = count - 1; i >= 0; i--) {
-    timestamps.push(new Date(now.getTime() - i * 60 * 60 * 1000).toISOString())
+    timestamps.push(new Date(now.getTime() - i * 60 * 60 * 1000).toISOString());
   }
-  return timestamps
+  return timestamps;
 }
 
 interface ReadingOptions {
-  baseTemp: number
-  baseHumidity: number
-  baseSoilMoisture: number
-  baseLight: number
+  baseTemp: number;
+  baseHumidity: number;
+  baseSoilMoisture: number;
+  baseLight: number;
   // Probabilidade de cada caso de borda (0-1)
-  offlineChance?: number
-  partialChance?: number
-  suspectChance?: number
+  offlineChance?: number;
+  partialChance?: number;
+  suspectChance?: number;
   // Horas em que houve irrigação manual
-  manualIrrigationHours?: number[]
+  manualIrrigationHours?: number[];
   // Tendência de queda da umidade do solo (simula secagem)
-  soilDrain?: number
+  soilDrain?: number;
 }
 
 function round(n: number, decimals = 1): number {
-  const f = Math.pow(10, decimals)
-  return Math.round(n * f) / f
+  const f = Math.pow(10, decimals);
+  return Math.round(n * f) / f;
 }
 
-function generateReadings(count: number, opts: ReadingOptions): SensorReading[] {
-  const timestamps = generateTimestamps(count)
+function generateReadings(
+  count: number,
+  opts: ReadingOptions,
+): SensorReading[] {
+  const timestamps = generateTimestamps(count);
   const {
     baseTemp,
     baseHumidity,
@@ -48,45 +51,53 @@ function generateReadings(count: number, opts: ReadingOptions): SensorReading[] 
     suspectChance = 0,
     manualIrrigationHours = [],
     soilDrain = 0.4,
-  } = opts
+  } = opts;
 
   return timestamps.map((timestamp, index) => {
-    const hour = new Date(timestamp).getHours()
-    const tempVariation = Math.sin(((hour - 6) * Math.PI) / 12) * 5
+    const hour = new Date(timestamp).getHours();
+    const tempVariation = Math.sin(((hour - 6) * Math.PI) / 12) * 5;
     const lightVariation =
-      hour >= 6 && hour <= 18 ? Math.sin(((hour - 6) * Math.PI) / 12) * 600 : 0
+      hour >= 6 && hour <= 18 ? Math.sin(((hour - 6) * Math.PI) / 12) * 600 : 0;
 
-    let status: SensorStatus = "ok"
-    let temperature: number | null = round(baseTemp + tempVariation + (Math.random() - 0.5) * 2)
+    let status: SensorStatus = "ok";
+    let temperature: number | null = round(
+      baseTemp + tempVariation + (Math.random() - 0.5) * 2,
+    );
     let humidity: number | null = Math.round(
       Math.min(100, Math.max(25, baseHumidity + (Math.random() - 0.5) * 10)),
-    )
+    );
     let soilMoisture: number | null = Math.round(
-      Math.min(100, Math.max(15, baseSoilMoisture - index * soilDrain + (Math.random() - 0.5) * 5)),
-    )
+      Math.min(
+        100,
+        Math.max(
+          15,
+          baseSoilMoisture - index * soilDrain + (Math.random() - 0.5) * 5,
+        ),
+      ),
+    );
     let lightLevel: number | null = Math.round(
       Math.max(0, baseLight + lightVariation + (Math.random() - 0.5) * 100),
-    )
+    );
 
-    const roll = Math.random()
-    const manualIrrigation = manualIrrigationHours.includes(hour)
+    const roll = Math.random();
+    const manualIrrigation = manualIrrigationHours.includes(hour);
 
     // Caso de borda: sensor offline (sem nenhum dado)
     if (roll < offlineChance) {
-      status = "offline"
-      temperature = null
-      humidity = null
-      soilMoisture = null
-      lightLevel = null
+      status = "offline";
+      temperature = null;
+      humidity = null;
+      soilMoisture = null;
+      lightLevel = null;
     } else if (roll < offlineChance + partialChance) {
       // Caso de borda: dado parcial (alguns campos faltando)
-      status = "partial"
-      humidity = null
-      lightLevel = null
+      status = "partial";
+      humidity = null;
+      lightLevel = null;
     } else if (roll < offlineChance + partialChance + suspectChance) {
       // Caso de borda: leitura suspeita (valor fisicamente improvável)
-      status = "suspect"
-      temperature = round(58 + Math.random() * 10) // pico absurdo de temperatura
+      status = "suspect";
+      temperature = round(58 + Math.random() * 10); // pico absurdo de temperatura
     }
 
     return {
@@ -97,52 +108,65 @@ function generateReadings(count: number, opts: ReadingOptions): SensorReading[] 
       lightLevel,
       status,
       manualIrrigation,
-    }
-  })
+    };
+  });
 }
 
 // Pega o último valor não-nulo de uma leitura
-function lastValid(readings: SensorReading[], key: keyof SensorReading): number | null {
+function lastValid(
+  readings: SensorReading[],
+  key: keyof SensorReading,
+): number | null {
   for (let i = readings.length - 1; i >= 0; i--) {
-    const v = readings[i][key]
-    if (typeof v === "number") return v
+    const v = readings[i][key];
+    if (typeof v === "number") return v;
   }
-  return null
+  return null;
 }
 
 function buildCanteiro(
-  partial: Omit<Canteiro, "readings" | "currentTemp" | "currentHumidity" | "currentSoilMoisture" | "currentLight" | "status"> & {
-    forcedStatus?: Canteiro["status"]
+  partial: Omit<
+    Canteiro,
+    | "readings"
+    | "currentTemp"
+    | "currentHumidity"
+    | "currentSoilMoisture"
+    | "currentLight"
+    | "status"
+  > & {
+    forcedStatus?: Canteiro["status"];
   },
   readingOpts: ReadingOptions,
   readingCount = 48,
 ): Canteiro {
-  const readings = generateReadings(readingCount, readingOpts)
-  const last = readings[readings.length - 1]
+  const readings = generateReadings(readingCount, readingOpts);
+  const last = readings[readings.length - 1];
 
-  const currentTemp = last.status === "offline" ? null : last.temperature
-  const currentHumidity = last.humidity ?? lastValid(readings, "humidity")
-  const currentSoilMoisture = last.soilMoisture ?? lastValid(readings, "soilMoisture")
-  const currentLight = last.lightLevel ?? lastValid(readings, "lightLevel")
+  const currentTemp = last.status === "offline" ? null : last.temperature;
+  const currentHumidity = last.humidity ?? lastValid(readings, "humidity");
+  const currentSoilMoisture =
+    last.soilMoisture ?? lastValid(readings, "soilMoisture");
+  const currentLight = last.lightLevel ?? lastValid(readings, "lightLevel");
 
   // Determina status automaticamente se não forçado
-  let status: Canteiro["status"]
+  let status: Canteiro["status"];
   if (partial.forcedStatus) {
-    status = partial.forcedStatus
+    status = partial.forcedStatus;
   } else if (last.status === "offline") {
-    status = "offline"
+    status = "offline";
   } else if (
-    (currentSoilMoisture !== null && currentSoilMoisture < partial.idealSoilMoistureMin) ||
+    (currentSoilMoisture !== null &&
+      currentSoilMoisture < partial.idealSoilMoistureMin) ||
     (currentTemp !== null && currentTemp > partial.idealTempMax)
   ) {
-    status = "critical"
+    status = "critical";
   } else if (currentTemp !== null && currentTemp > partial.idealTempMax - 2) {
-    status = "warning"
+    status = "warning";
   } else {
-    status = "healthy"
+    status = "healthy";
   }
 
-  const { forcedStatus, ...rest } = partial
+  const { forcedStatus, ...rest } = partial;
   return {
     ...rest,
     status,
@@ -151,7 +175,7 @@ function buildCanteiro(
     currentSoilMoisture,
     currentLight,
     readings,
-  }
+  };
 }
 
 // Armazenamento em memória (mutável para suportar CRUD)
@@ -172,7 +196,13 @@ let canteiros: Canteiro[] = [
       plantedDate: "2026-03-15",
       estimatedHarvest: "2026-06-20",
     },
-    { baseTemp: 24, baseHumidity: 65, baseSoilMoisture: 75, baseLight: 400, manualIrrigationHours: [6] },
+    {
+      baseTemp: 24,
+      baseHumidity: 65,
+      baseSoilMoisture: 75,
+      baseLight: 400,
+      manualIrrigationHours: [6],
+    },
   ),
   buildCanteiro(
     {
@@ -190,7 +220,13 @@ let canteiros: Canteiro[] = [
       plantedDate: "2026-04-20",
       estimatedHarvest: "2026-05-25",
     },
-    { baseTemp: 22, baseHumidity: 72, baseSoilMoisture: 70, baseLight: 350, partialChance: 0.08 },
+    {
+      baseTemp: 22,
+      baseHumidity: 72,
+      baseSoilMoisture: 70,
+      baseLight: 350,
+      partialChance: 0.08,
+    },
   ),
   buildCanteiro(
     {
@@ -209,7 +245,13 @@ let canteiros: Canteiro[] = [
       estimatedHarvest: "2026-05-30",
       forcedStatus: "warning",
     },
-    { baseTemp: 25, baseHumidity: 55, baseSoilMoisture: 52, baseLight: 450, suspectChance: 0.06 },
+    {
+      baseTemp: 25,
+      baseHumidity: 55,
+      baseSoilMoisture: 52,
+      baseLight: 450,
+      suspectChance: 0.06,
+    },
   ),
   buildCanteiro(
     {
@@ -227,7 +269,13 @@ let canteiros: Canteiro[] = [
       plantedDate: "2026-03-01",
       estimatedHarvest: "2026-06-15",
     },
-    { baseTemp: 25, baseHumidity: 60, baseSoilMoisture: 68, baseLight: 420, manualIrrigationHours: [5, 16] },
+    {
+      baseTemp: 25,
+      baseHumidity: 60,
+      baseSoilMoisture: 68,
+      baseLight: 420,
+      manualIrrigationHours: [5, 16],
+    },
   ),
   buildCanteiro(
     {
@@ -247,7 +295,13 @@ let canteiros: Canteiro[] = [
       forcedStatus: "critical",
     },
     // Solo bem seco -> dispara alerta de umidade < 30%
-    { baseTemp: 28, baseHumidity: 45, baseSoilMoisture: 28, baseLight: 500, soilDrain: 0.2 },
+    {
+      baseTemp: 28,
+      baseHumidity: 45,
+      baseSoilMoisture: 28,
+      baseLight: 500,
+      soilDrain: 0.2,
+    },
   ),
   buildCanteiro(
     {
@@ -285,40 +339,118 @@ let canteiros: Canteiro[] = [
       forcedStatus: "offline",
     },
     // Sensor com alta taxa de falha -> offline
-    { baseTemp: 23, baseHumidity: 62, baseSoilMoisture: 60, baseLight: 380, offlineChance: 0.85 },
+    {
+      baseTemp: 23,
+      baseHumidity: 62,
+      baseSoilMoisture: 60,
+      baseLight: 380,
+      offlineChance: 0.85,
+    },
   ),
-]
+  buildCanteiro(
+    {
+      id: "canteiro-8",
+      name: "Canteiro R1",
+      plant: "Soja Boa",
+      idealTempMin: 15,
+      idealTempMax: 25,
+      idealSoilMoistureMin: 50,
+      idealHumidityMin: 55,
+      area: 11,
+      sensorId: "SNS-R1-007",
+      lastWatered: new Date(Date.now() - 8 * 3600 * 1000).toISOString(),
+      irrigationMode: "auto",
+      plantedDate: "2026-03-28",
+      estimatedHarvest: "2026-06-10",
+      forcedStatus: "healthy",
+    },
+    {
+      baseTemp: 23,
+      baseHumidity: 62,
+      baseSoilMoisture: 60,
+      baseLight: 380,
+    },
+  ),
+];
+
+let partialTestCanteiro = canteiros.find((c) => c.id === "canteiro-8");
+
+if (partialTestCanteiro) {
+  partialTestCanteiro.status = "healthy";
+
+  partialTestCanteiro.currentTemp = 30;
+  partialTestCanteiro.currentHumidity = null;
+  partialTestCanteiro.currentSoilMoisture = 90;
+
+  const lastReadingIndex = partialTestCanteiro.readings.length - 1;
+  const lastReading = partialTestCanteiro.readings[lastReadingIndex];
+
+  if (lastReading) {
+    partialTestCanteiro.readings[lastReadingIndex] = {
+      ...lastReading,
+      temperature: 30,
+      humidity: null,
+      soilMoisture: 90,
+      status: "partial",
+    };
+  }
+}
+
+partialTestCanteiro = canteiros.find((c) => c.id === "canteiro-3");
+
+if (partialTestCanteiro) {
+  partialTestCanteiro.status = "healthy";
+
+  partialTestCanteiro.currentTemp = 30;
+  partialTestCanteiro.currentHumidity = 54;
+  partialTestCanteiro.currentSoilMoisture = null;
+
+  const lastReadingIndex = partialTestCanteiro.readings.length - 1;
+  const lastReading = partialTestCanteiro.readings[lastReadingIndex];
+
+  if (lastReading) {
+    partialTestCanteiro.readings[lastReadingIndex] = {
+      ...lastReading,
+      temperature: 30,
+      humidity: 54,
+      soilMoisture: null,
+      status: "partial",
+    };
+  }
+}
 
 // Histórico semanal de irrigação (litros por dia)
 const weeklyWater = (() => {
-  const days: { date: string; liters: number }[] = []
-  const base = [52.3, 48.7, 55.2, 41.8, 49.5, 44.2, 47.5]
+  const days: { date: string; liters: number }[] = [];
+  const base = [52.3, 48.7, 55.2, 41.8, 49.5, 44.2, 47.5];
   for (let i = 6; i >= 0; i--) {
-    const d = new Date()
-    d.setDate(d.getDate() - i)
+    const d = new Date();
+    d.setDate(d.getDate() - i);
     days.push({
       date: d.toISOString().split("T")[0],
       liters: base[6 - i],
-    })
+    });
   }
-  return days
-})()
+  return days;
+})();
 
 // Contagem de irrigações por canteiro (relatório agregado)
 function irrigationsByCanteiro() {
   return canteiros.map((c) => ({
     canteiroId: c.id,
     canteiroName: c.name,
-    count: c.readings.filter((r) => r.manualIrrigation).length + (c.irrigationMode === "auto" ? 14 : 6),
-  }))
+    count:
+      c.readings.filter((r) => r.manualIrrigation).length +
+      (c.irrigationMode === "auto" ? 14 : 6),
+  }));
 }
 
 export const db = {
   getCanteiros: () => canteiros,
   getCanteiro: (id: string) => canteiros.find((c) => c.id === id),
   setCanteiros: (next: Canteiro[]) => {
-    canteiros = next
+    canteiros = next;
   },
   weeklyWater,
   irrigationsByCanteiro,
-}
+};
