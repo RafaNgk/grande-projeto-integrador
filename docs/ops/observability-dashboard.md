@@ -27,6 +27,26 @@ O frontend deve registrar eventos utilizando formato JSON estruturado para facil
 
 Sempre que a API retornar um identificador de requisição (Request-Id, Trace-Id ou equivalente), o valor deve ser propagado para os logs do frontend.
 
+### Evento `fetch_sensor_data_failed`
+
+A função `getAggregates` registra este evento quando um canteiro não pode participar das médias agregadas por falha de dados do sensor. O caso parcial ocorre quando a última leitura tem status `partial` ou algum campo atual usado no agregado está `null`.
+
+Campos de rastreabilidade aplicáveis ao caminho parcial:
+
+```json
+{
+  "event": "fetch_sensor_data_failed",
+  "source": "getAggregates",
+  "reason": "partial_sensor_data",
+  "requestId": "req-...",
+  "canteiroId": "parcial-temp-ok",
+  "sensorId": "sensor-parcial-temp-ok",
+  "latestSensorStatus": "partial",
+  "missingFields": ["currentHumidity"],
+  "includedInAggregate": false
+}
+```
+
 ---
 
 ## Métricas Instrumentadas
@@ -147,6 +167,21 @@ Caso o problema persista:
   "requestId":"req-8c91ab",
   "status":500
 }
+
+[ERROR] {
+  "timestamp":"2026-06-18T21:51:29.000Z",
+  "event":"fetch_sensor_data_failed",
+  "requestId":"req-...",
+  "source":"getAggregates",
+  "canteiroId":"parcial-temp-ok",
+  "canteiroName":"Parcial temp ok",
+  "sensorId":"sensor-parcial-temp-ok",
+  "canteiroStatus":"healthy",
+  "latestSensorStatus":"partial",
+  "reason":"partial_sensor_data",
+  "missingFields":["currentHumidity"],
+  "includedInAggregate":false
+}
 ```
 
 ### Exemplo de métrica coletada
@@ -165,3 +200,25 @@ Anexar nesta seção:
 - Ou captura do terminal mostrando a instrumentação em execução.
 
 Observação: a evidência deve ser atualizada a cada release do projeto.
+
+### Evidência automatizada da correção `getAggregates`
+
+Correção rastreada:
+- `getAggregates` exclui canteiros parciais das três médias agregadas.
+- O mesmo conjunto de canteiros íntegros alimenta `avgTemperature`, `avgHumidity` e `avgSoilMoisture`.
+- O caminho parcial emite log estruturado com `reason: "partial_sensor_data"` e `includedInAggregate: false`.
+- O caminho sem regressão, com todos os canteiros saudáveis, não emite `console.error`.
+
+Teste executado:
+
+```bash
+npm test -- lib/api.test.ts
+```
+
+Resultado local:
+
+```text
+lib/api.test.ts (2 tests)
+✓ getAggregates > exclui canteiro parcial das tres medias e emite log estruturado
+✓ getAggregates > mantem medias sem regressao quando todos os canteiros estao saudaveis
+```
