@@ -1,0 +1,41 @@
+================================================================================
+Sistema de Monitoramento de Horta - Suite de testes v0.1
+Captura: 08/05/2026 12:35 BRT
+Branch: feature/a1-6-test-strategy
+Runner: ambiente local
+================================================================================
+
+$ py -m pytest -v tests/contract
+
+============================= test session starts =============================
+platform win32 -- Python 3.12.6, pytest-8.1.1, pluggy-1.6.0
+cachedir: .pytest_cache
+rootdir: C:\Users\pedro\Downloads\grande-projeto-integrador-scm
+plugins: anyio-4.13.0
+collected 1 item
+
+tests/contract/test_api_leituras_contract.py::test_post_leituras_valida_contrato_da_api PASSED [100%]
+
+============================== 1 passed in 0.52s ==============================
+
+================================================================================
+Resumo da execucao
+================================================================================
+Total de testes:           1
+Passou:                    1
+Falhou:                    0
+Pulado:                    0
+
+Ancoragem na matriz risco -> teste:
+  - test_post_leituras_valida_contrato_da_api -> UC-02
+  - Risco: ESP32 enviar payload sem campo obrigatorio para a API
+
+Validacoes realizadas:
+  - Status code esperado: 201
+  - Schema JSON da resposta validado com jsonschema
+  - Campos obrigatorios presentes: device_id, timestamp, sensor, valor e status
+
+Observacao:
+  A equipe criou uma API propria minima em FastAPI para validar o contrato
+  inicial do endpoint POST /leituras nesta entrega v0.1.
+================================================================================
